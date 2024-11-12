@@ -21,7 +21,7 @@ def export_mesh_to_obj(path, vertices, faces):
         f.write(f"f {face[0]} {face[1]} {face[2]}\n")
     # ###############
     # TODO: Implement
-    raise NotImplementedError
+    # raise NotImplementedError
     # ###############
 
 
@@ -33,7 +33,12 @@ def export_pointcloud_to_obj(path, pointcloud):
     :return: None
     """
 
+    f = open(path, "w")
+    for x, y, z in pointcloud:
+        f.write("v {} {} {}\n".format(x, y, z))
+
+
     # ###############
     # TODO: Implement
-    raise NotImplementedError
+    # raise NotImplementedError
     # ###############

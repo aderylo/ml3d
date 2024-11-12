@@ -148,9 +148,16 @@ def compute_cube_index(cube: np.array, isolevel=0.) -> int:
     :return: The cube index as integer value
     """
 
+
+    index = 0
+    for i in range(8):
+        if cube[i] < isolevel:
+            index |= (1 << i)
+    return index
+
     # ###############
     # TODO: Implement
-    raise NotImplementedError
+    # raise NotImplementedError
     # ###############
 
 
@@ -164,9 +171,79 @@ def marching_cubes(sdf: np.array) -> tuple:
     :return: A tuple with (1) a numpy array of vertices (nx3) and (2) a numpy array of faces (mx3)
     """
 
+
+    lookup_table = [
+        [[0, 0, 0], [1, 0, 0]],  # Edge 0: between (0, 0, 0) and (1, 0, 0)
+        [[1, 0, 0], [1, 1, 0]],  # Edge 1: between (1, 0, 0) and (1, 1, 0)
+        [[1, 1, 0], [0, 1, 0]],  # Edge 2: between (1, 1, 0) and (0, 1, 0)
+        [[0, 1, 0], [0, 0, 0]],  # Edge 3: between (0, 1, 0) and (0, 0, 0)
+        # Top layer edges
+        [[0, 0, 1], [1, 0, 1]],  # Edge 4: between (0, 0, 1) and (1, 0, 1)
+        [[1, 0, 1], [1, 1, 1]],  # Edge 5: between (1, 0, 1) and (1, 1, 1)
+        [[1, 1, 1], [0, 1, 1]],  # Edge 6: between (1, 1, 1) and (0, 1, 1)
+        [[0, 1, 1], [0, 0, 1]],  # Edge 7: between (0, 1, 1) and (0, 0, 1)
+        # Vertical edges
+        [[0, 0, 0], [0, 0, 1]],  # Edge 8: between (0, 0, 0) and (0, 0, 1)
+        [[1, 0, 0], [1, 0, 1]],  # Edge 9: between (1, 0, 0) and (1, 0, 1)
+        [[1, 1, 0], [1, 1, 1]],  # Edge 10: between (1, 1, 0) and (1, 1, 1)
+        [[0, 1, 0], [0, 1, 1]],  # Edge 11: between (0, 1, 0) and (0, 1, 1)
+    ]
+    vertices = []
+    faces = []
+    vertex_cache = {}  # Cache to avoid duplicate vertices
+
+    for i in range(sdf.shape[0] - 1):
+        for j in range(sdf.shape[1] - 1):
+            for k in range(sdf.shape[2] - 1):
+                # Extract the 8 corner values of the current cube
+                cube = sdf[i:i + 2, j:j + 2, k:k + 2].flatten()
+                cube_index = compute_cube_index(cube)
+
+                # Skip if the cube is entirely inside or outside the surface
+                if cube_index == 0 or cube_index == 255:
+                    continue
+
+                # Iterate through the triangles in the current cube configuration
+                for t in range(0, 16, 3):
+                    if triangle_table[cube_index][t] == -1:
+                        break  # No more triangles for this configuration
+
+                    face = []
+                    for v in range(3):
+                        # Get the edge index from triangle_table
+                        edge_index = triangle_table[cube_index][t + v]
+                        if edge_index == -1:
+                            break  # End of face
+
+                        # Calculate vertex position via interpolation
+                        edge_start, edge_end = lookup_table[edge_index]
+                        start_point = np.array([i, j, k]) + np.array(edge_start)
+                        end_point = np.array([i, j, k]) + np.array(edge_end)
+                        sdf_start = cube[edge_index]
+                        sdf_end = cube[(t + v + 1) % 3]
+
+                        # Interpolate the vertex
+                        vertex_pos = vertex_interpolation(start_point, end_point, sdf_start, sdf_end)
+
+                        # Cache vertex positions to avoid duplicates
+                        vertex_key = tuple(vertex_pos.round(5))  # Rounding to avoid floating-point issues
+                        if vertex_key in vertex_cache:
+                            vertex_index = vertex_cache[vertex_key]
+                        else:
+                            vertex_index = len(vertices)
+                            vertices.append(vertex_pos)
+                            vertex_cache[vertex_key] = vertex_index
+
+                        face.append(vertex_index)
+
+                    # Ensure the face is a complete triangle
+                    if len(face) == 3:
+                        faces.append(face)
+
+    return np.array(vertices), np.array(faces)
     # ###############
     # TODO: Implement
-    raise NotImplementedError
+    # raise NotImplementedError
     # ###############
 
 
