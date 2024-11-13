@@ -304,4 +304,4 @@ notebook/templates/*.html
 
 # 3D girds 
 *.ply
-
+myenv
