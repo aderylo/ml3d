@@ -13,6 +13,8 @@ def procrustes_align(pc_x, pc_y):
     R = np.zeros((3, 3), dtype=np.float32)
     t = np.zeros((3,), dtype=np.float32)
 
+    # TODO: Your implementation starts here 
+    ###############
     # 1. get centered pc_x and centered pc_y
     mean_x = np.mean(pc_x, axis=0)
     mean_y = np.mean(pc_y, axis=0)
@@ -37,7 +39,10 @@ def procrustes_align(pc_x, pc_y):
     print('Procrustes Aligment Loss: ', np.abs((np.matmul(R, pc_x.T) + t_broadcast) - pc_y.T).mean())
 
     return R, t
+    # TODO: Your implementation ends here 
+    ###############
 
+    
 
 def load_correspondences():
     """

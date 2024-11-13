@@ -13,6 +13,7 @@ def sdf_grid(sdf_function, resolution):
     """
 
     # ###############
+    # TODO: Implement
     axis = np.linspace(-1, 1, resolution)
     x, y, z = np.meshgrid(axis, axis, axis, indexing="ij")
     grid = sdf_function(x.flatten(), y.flatten(), z.flatten())
