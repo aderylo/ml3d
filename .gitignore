@@ -306,3 +306,6 @@ notebook/templates/*.html
 *.ply
 myenv
 *.obj
+
+# runs
+runs
