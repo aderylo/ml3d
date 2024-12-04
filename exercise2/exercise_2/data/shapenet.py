@@ -5,7 +5,8 @@ import json
 import numpy as np
 import trimesh
 
-from exercise_2.data.binvox_rw import read_as_3d_array
+from exercise_2.data.binvox_rw import read_as_3d_array, read_as_coord_array
+from typing import Literal
 
 
 class ShapeNetVox(torch.utils.data.Dataset):
@@ -26,7 +27,7 @@ class ShapeNetVox(torch.utils.data.Dataset):
         assert split in ['train', 'val', 'overfit']
 
         self.items = Path(f"exercise_2/data/splits/shapenet/{split}.txt").read_text().splitlines()  # keep track of shapes based on split
-
+        
     def __getitem__(self, index):
         """
         PyTorch requires you to provide a getitem implementation for your dataset.
@@ -37,11 +38,11 @@ class ShapeNetVox(torch.utils.data.Dataset):
                  "label", a number in [0, 12] representing the class of the shape
         """
         # TODO Get item associated with index, get class, load voxels with ShapeNetVox.get_shape_voxels
-        item = None
+        item = self.items[index]
         # Hint: since shape names are in the format "<shape_class>/<shape_identifier>", the first part gives the class
-        item_class = None
+        item_class = item.split('/')[0]
         # read voxels from binvox format on disk as 3d numpy arrays
-        voxels = None
+        voxels = ShapeNetVox.get_shape_voxels(item)
         return {
             "name": item,
             "voxel": voxels[np.newaxis, :, :, :],  # we add an extra dimension as the channel axis, since pytorch 3d tensors are Batch x Channel x Depth x Height x Width
@@ -53,7 +54,7 @@ class ShapeNetVox(torch.utils.data.Dataset):
         :return: length of the dataset
         """
         # TODO Implement
-        return
+        return len(self.items)
 
     @staticmethod
     def move_batch_to_device(batch, device):
@@ -82,25 +83,30 @@ class ShapeNetPoints(torch.utils.data.Dataset):
     class_name_mapping = json.loads(Path("exercise_2/data/shape_info.json").read_text())  # mapping for ShapeNet ids -> names
     classes = sorted(class_name_mapping.keys())
 
-    def __init__(self):
+    def __init__(self, split: Literal['train', 'val', 'overfit']):
         # TODO Read sample IDs from the correct split file and store in self.items
-        pass
+        super().__init__()
+        assert split in ['train', 'val', 'overfit']
+
+        self.items = Path(f"exercise_2/data/splits/shapenet/{split}.txt").read_text().splitlines()  # keep track of shapes based on split
 
     def __getitem__(self, index):
         # TODO Get item associated with index, get class, load points with ShapeNetPoints.get_point_cloud
-
+        item = self.items[index]
         # Hint: Since shape names are in the format "<shape_class>/<shape_identifier>", the first part gives the class
-        item_class = None
+        item_class = item.split('/')[0]
+        item_id = item.split('/')[1]
+        points = ShapeNetPoints.get_point_cloud(item)
 
         return {
-            "name": None,  # The item ID
-            "points": None,
+            "name": item_id,  # The item ID
+            "points": points,
             "label": ShapeNetPoints.classes.index(item_class)  # Label is 0 indexed position in sorted class list, e.g. 02691156 is label 0, 02828884 is label 1 and so on.
         }
 
     def __len__(self):
         # TODO Implement
-        pass
+        return len(self.items)
 
     @staticmethod
     def move_batch_to_device(batch, device):
@@ -121,4 +127,6 @@ class ShapeNetPoints(torch.utils.data.Dataset):
         category_id, shape_id = shapenet_id.split('/')
 
         # TODO Implement
-        pass
+        filename = "exercise_2/data/ShapeNetPointClouds/{}/{}.obj".format(category_id, shape_id)
+        points = trimesh.load(filename)
+        return points.vertices.T.astype(np.float32) 
