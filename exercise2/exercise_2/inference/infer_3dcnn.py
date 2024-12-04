@@ -14,7 +14,7 @@ class InferenceHandler3DCNN:
         :param ckpt: checkpoint path to weights of the trained network
         """
         self.model = ThreeDeeCNN(ShapeNetVox.num_classes)
-        self.model.load_state_dict(torch.load(ckpt, map_location='cpu'))
+        self.model.load_state_dict(torch.load(ckpt, map_location="cpu"))
         self.model.eval()
 
     def infer_single(self, voxels):
@@ -26,8 +26,11 @@ class InferenceHandler3DCNN:
         input_tensor = torch.from_numpy(voxels).float().unsqueeze(0).unsqueeze(0)
 
         # TODO: Predict class
-        prediction = None
-        class_id = None
-        class_name = None
+        with torch.no_grad():
+            prediction = self.model(input_tensor)[-1][-1]
+            prediction = torch.argmax(prediction)
+
+        class_id = ShapeNetVox.classes[prediction.item()]
+        class_name = ShapeNetVox.class_name_mapping[class_id]
 
         return class_name
