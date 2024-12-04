@@ -149,7 +149,8 @@ class PointNetSegmentation(nn.Module):
 
         self.conv1 = nn.Conv1d(1088, 512, kernel_size=(1,))
         self.conv2 = nn.Conv1d(512, 256, kernel_size=(1,))
-        self.conv3 = nn.Conv1d(256, num_classes, kernel_size=(1,))
+        self.conv3 = nn.Conv1d(256, 128, kernel_size=(1,))
+        self.conv4 = nn.Conv1d(128, num_classes, kernel_size=(1,))
 
         self.bn1 = nn.BatchNorm1d(512)
         self.bn2 = nn.BatchNorm1d(256)
