@@ -41,16 +41,16 @@ def train(model, trainloader, valloader, device, config):
     for epoch in range(config['max_epochs']):
         for i, batch in enumerate(trainloader):
             # TODO Add missing pieces, as in the exercise parts before
-            ShapeNetParts.move_batch_to_device(batch, device)
+            ShapeNetPoints.move_batch_to_device(batch, device)
 
             optimizer.zero_grad()
             prediction = model(batch['points'])
-            prediction = prediction.transpose(2, 1)
+            #prediction = prediction.transpose(2, 1)
             loss_all = loss_criterion(prediction, batch['label'])
             loss_all.backward()
             optimizer.step()
 
-            train_loss_running += loss.item()
+            train_loss_running += loss_all.item()
             iteration = epoch * len(trainloader) + i
 
 
@@ -70,7 +70,7 @@ def train(model, trainloader, valloader, device, config):
                 loss_val = 0.
                 for batch_val in valloader:
                     # TODO Add missing pieces, as in the exercise parts before
-                    ShapeNetPoints.move_batch_to_device(batch_val, device)
+                    #ShapeNetPoints.move_batch_to_device(batch_val, device)
 
                     with torch.no_grad():
                         prediction = model(batch_val['points'])
