@@ -35,7 +35,7 @@ def train(model, trainloader, valloader, device, config):
             loss_all.backward()
             optimizer.step()
 
-            train_loss_running += loss.item()
+            train_loss_running += loss_all.item()
             iteration = epoch * len(trainloader) + i
 
 

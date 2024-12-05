@@ -42,15 +42,31 @@ class ShapeNetParts(torch.utils.data.Dataset):
 
     @staticmethod
     def get_point_cloud_with_labels(shapenet_id):
-        """
-        Utility method for reading a ShapeNet point cloud from disk, reads points from pts files on disk as 3d numpy arrays, together with their per-point part labels
-        :param shapenet_id: Shape ID of the form <shape_class>/<shape_identifier>, e.g. 03001627/f913501826c588e89753496ba23f2183
-        :return: tuple: a numpy array representing the point cloud, in shape 3x1024, and the segmentation labels, as numpy array in shape 1024
-        """
         category_id, shape_id = shapenet_id.split('/')
 
-        # TODO: Load point cloud and segmentation labels, subsample to 1024 points. Make sure points and labels still correspond afterwards!
-        # TODO: Important: Use ShapeNetParts.part_id_to_overall_id to convert the part labels you get from the .seg files from local to global ID as they start at 0 for each shape class whereas we want to predict the overall part class.
-        # ShapeNetParts.part_id_to_overall_id converts an ID in form <shapenetclass_partlabel> to and integer representing the global part class id
+        # Paths to point cloud and segmentation files
+        points_file = ShapeNetParts.dataset_path / category_id / 'points' / f'{shape_id}.npy'
+        seg_file = ShapeNetParts.dataset_path / category_id  / 'points_label' / f'{shape_id}.seg'
 
-        pass
+        # Load point cloud data
+        pointcloud = np.load(points_file)
+        segmentation_labels = np.loadtxt(seg_file, dtype=int)
+
+        # Subsample to 1024 points
+        num_points = pointcloud.shape[0]
+        if num_points >= ShapeNetParts.num_points:
+            idx = np.random.choice(num_points, ShapeNetParts.num_points, replace=False)
+        else:
+            idx = np.random.choice(num_points, ShapeNetParts.num_points, replace=True)
+        pointcloud = pointcloud[idx, :]
+        segmentation_labels = segmentation_labels[idx]
+
+        # Convert local labels to global labels
+        keys = [f"{category_id}_{label}" for label in segmentation_labels]
+        global_labels = [ShapeNetParts.part_id_to_overall_id[key] for key in keys]
+        global_labels = np.array(global_labels)
+
+        # Transpose point cloud to shape [3, 1024]
+        pointcloud = pointcloud.T
+
+        return pointcloud, global_labels
