@@ -11,9 +11,9 @@ class TNet(nn.Module):
         # TODO Add layers: Linear 1024->512, 512->256, 256->k^2 with corresponding batch norms and ReLU
 
 
-        self.conv1 = nn.Conv1d(k, 64, kernel_size=(1,))
-        self.conv2 = nn.Conv1d(64, 128, kernel_size=(1,))
-        self.conv3 = nn.Conv1d(128, 1024, kernel_size=(1,))
+        self.conv1 = nn.Conv1d(k, 64, 1)
+        self.conv2 = nn.Conv1d(64, 128, 1)
+        self.conv3 = nn.Conv1d(128, 1024, 1)
 
         self.fc1 = nn.Linear(1024, 512)
         self.fc2 = nn.Linear(512, 256)
@@ -60,7 +60,6 @@ class PointNetEncoder(nn.Module):
         super().__init__()
 
         # TODO Define convolution layers, batch norm layers, and ReLU
-
         self.conv1 = nn.Conv1d(3, 64, kernel_size=(1,))
         self.conv2 = nn.Conv1d(64, 128, kernel_size=(1,))
         self.conv3 = nn.Conv1d(128, 1024, kernel_size=(1,))
@@ -69,13 +68,10 @@ class PointNetEncoder(nn.Module):
         self.bn2 = nn.BatchNorm1d(128)
         self.bn3 = nn.BatchNorm1d(1024)
 
-        self.relu = nn.ReLU()
-
-
-
         self.input_transform_net = TNet(k=3)
         self.feature_transform_net = TNet(k=64)
 
+        self.relu = nn.ReLU()
         self.return_point_features = return_point_features
 
     def forward(self, x):

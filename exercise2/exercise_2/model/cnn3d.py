@@ -107,7 +107,7 @@ class ThreeDeeCNN(nn.Module):
 
                     # TODO: get prediction for object for backbone feature at d, h, w
                     partial_object_prediction = partial_predictor(
-                        backbone_features[:, :, d, h, w].view(batch_size, -1)
+                        backbone_features[:, :, d, h, w]
                     )
 
                     predictions_partial.append(partial_object_prediction)
