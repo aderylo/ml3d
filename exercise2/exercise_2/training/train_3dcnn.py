@@ -65,7 +65,7 @@ def train(model, trainloader, valloader, device, config):
     loss_criterion.to(device)
 
     # TODO: declare optimizer (learning rate provided in config)
-    optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=config['learning_rate'])
 
     # set model to train, important if your network has e.g. dropout or batchnorm layers
     model.train()
@@ -77,6 +77,7 @@ def train(model, trainloader, valloader, device, config):
     train_loss_running = 0.
 
     for epoch in range(config['max_epochs']):
+        train_loss_running = 0.
         for i, batch in enumerate(trainloader):
             # move batch to device
             ShapeNetVox.move_batch_to_device(batch, device)
@@ -90,8 +91,8 @@ def train(model, trainloader, valloader, device, config):
             # TODO: compute total loss = sum of loss for whole prediction + losses for partial predictions
             loss_total = torch.zeros([1], dtype=batch['voxel'].dtype, requires_grad=True).to(device)
             for output_idx in range(prediction.shape[1]):
-                loss = loss_criterion(prediction[:, output_idx, :], batch['label'])
-                loss_total = loss_total + loss.item()  # TODO: Loss due to prediction[:, output_idx, :] (output_idx=0 for global prediction, 1-8 local)
+                loss_total += loss_criterion(prediction[:, output_idx, :], batch['label'])  # TODO: Loss due to prediction[:, output_idx, :] (output_idx=0 for global prediction, 1-8 local)
+            loss_total /= prediction.shape[1] 
 
             # TODO: compute gradients on loss_total (backward pass)
             loss_total.backward()
@@ -124,13 +125,20 @@ def train(model, trainloader, valloader, device, config):
                         prediction = model(batch_val['voxel'])
 
                     # TODO: Get predicted labels from scores
-                    # suss
-                    predicted_label = torch.argmax(prediction[:, 0, :], dim=1)
+                    predicted_label = torch.argmax(prediction, dim=2)
 
                     # TODO: keep track of total / correct / loss_total_val
-                    total += batch_val['label'].shape[0]
-                    correct += (predicted_label == batch_val['label']).sum().item()
-                    loss_total_val += loss_criterion(prediction[:, 0, :], batch_val['label']).item()
+                    grand_truth = batch_val['label'].unsqueeze(dim=1)
+                    grand_truth = torch.cat(9 * [grand_truth], dim=1)
+
+                    correct += torch.sum(grand_truth == predicted_label).item()
+                    total += predicted_label.shape[0] * predicted_label.shape[1]
+
+                    loss = 0.0
+                    for output_idx in range(prediction.shape[1]):
+                        loss += loss_criterion(prediction[:, output_idx, :], batch_val['label']) / prediction.shape[1] 
+                    loss_total_val += loss
+
 
                 accuracy = 100 * correct / total
 

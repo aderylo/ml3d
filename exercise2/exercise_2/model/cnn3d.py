@@ -19,10 +19,13 @@ class MLPConv(nn.Module):
         # The first conv has kernel_size and stride provided as the parameters, rest of the convs have 1x1x1 filters, with default stride
         self.model = nn.Sequential(
             nn.Conv3d(in_channels, out_channels, kernel_size, stride),
+            nn.BatchNorm3d(out_channels),
             nn.ReLU(),
             nn.Conv3d(out_channels, out_channels, 1, 1),
+            nn.BatchNorm3d(out_channels),
             nn.ReLU(),
             nn.Conv3d(out_channels, out_channels, 1, 1),
+            nn.BatchNorm3d(out_channels),
             nn.ReLU(),
         )
 
@@ -61,9 +64,10 @@ class ThreeDeeCNN(nn.Module):
                 # TODO: partial predictor linear layers as per the paper
                 nn.Sequential(
                     nn.Linear(512, 40),
+                    nn.BatchNorm1d(40),
                     nn.ReLU(),
-                    nn.Linear(40, n_classes),
                     nn.Dropout(0.5),
+                    nn.Linear(40, n_classes),
                     nn.Softmax(dim=-1),
                 )
             )
@@ -71,13 +75,14 @@ class ThreeDeeCNN(nn.Module):
         # TODO: add predictor for full 2x2x2 feature volume
         self.full_predictor = nn.Sequential(
             nn.Linear(512 * self.feature_cube_side**3, 2048),
+            nn.BatchNorm1d(2048),
             nn.ReLU(),
-            nn.Linear(2048, 2048),
-            nn.ReLU(),
-            nn.Linear(2048, 40),
-            nn.ReLU(),
-            nn.Linear(40, n_classes),
             nn.Dropout(0.5),
+            nn.Linear(2048, 40),
+            nn.BatchNorm1d(40),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(40, n_classes),
             nn.Softmax(dim=-1),
         )
 
