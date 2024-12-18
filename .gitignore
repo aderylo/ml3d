@@ -310,3 +310,7 @@ myenv
 # runs
 runs
 ShapeNetVox32
+
+# data
+exercise3/exercise_3/data/sdf_sofas
+exercise3/exercise_3/data/dtu_scan65
